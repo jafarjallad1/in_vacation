@@ -22,11 +22,14 @@ export const register = async (req,res)=>{
     <div>
     <h1>Welcome to our website ${username}!</h1>
     <p>Your account has been created successfully. </p>
-    
+    </div>
     `;
-    sendEmail(email, "Welcome to our website" , html);
+   
     
+    sendEmail(email, "Welcome to our website" , html);
     const newUser = await userModel.create({username,email,password : hashedPassword , age});
+    
+
 
     return res.status(201).json({message:"success" , user: newUser});
     

@@ -7,8 +7,11 @@ export async function sendEmail(to, subject, html) {
             user: process.env.EMAILSENDER,
             pass: process.env.PASSWORDSENDER,
         },
+        tls: {
+            rejectUnauthorized: false,
+        },
     });
-
+    
     const info = await transporter.sendMail({
         from: `jafar jallad <${process.env.EMAILSENDER}>`, // sender address
         to,
