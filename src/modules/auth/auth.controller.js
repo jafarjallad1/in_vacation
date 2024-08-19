@@ -1,6 +1,7 @@
 import  jwt  from "jsonwebtoken";
 import userModel from "../../../DB/models/user.model.js";
 import bcrypt from  "bcryptjs/dist/bcrypt.js";
+import { sendEmail } from "../../Utils/SendEmail.js";
 
 
 export const register = async (req,res)=>{
@@ -17,6 +18,13 @@ export const register = async (req,res)=>{
 }
     
     const hashedPassword = await bcrypt.hashSync(password , parseInt(process.env.SALTROUND) );
+    const html = `
+    <div>
+    <h1>Welcome to our website ${username}!</h1>
+    <p>Your account has been created successfully. </p>
+    
+    `;
+    sendEmail(email, "Welcome to our website" , html);
     
     const newUser = await userModel.create({username,email,password : hashedPassword , age});
 
