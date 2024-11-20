@@ -1,12 +1,15 @@
 import connectDb from '../DB/connection.js';
 import authrouter from './modules/auth/auth.router.js';
-import messagerouter from './modules/message/message.router.js';
+import chaletRouter from "./modules/chalet/chalet.router.js";
+import ownerRouter from './modules/owner/owner.router.js';
 const initapp = (app,express) => {
     // Middleware for parsing JSON request bodies
     connectDb();
     app.use(express.json());
     app.use('/auth',authrouter);
-    app.use('/messages', messagerouter);
+    app.use('/chalets',chaletRouter);
+    app.use('/owner',ownerRouter);
+
     app.use('*',(req, res) => {
 return res.status(404).json({message:"page not found"});
     })

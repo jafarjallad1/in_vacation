@@ -10,6 +10,10 @@ export const registerSchema = {
         email: generalFields.email,
         password: generalFields.password,
         confirmPassword: joi.valid(joi.ref('password')).required(),
+        phone:joi.string().required().messages({
+            "string.required": "Phone number is a required field",
+        }),
+       
 })
 };
 
