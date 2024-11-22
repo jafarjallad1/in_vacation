@@ -8,12 +8,28 @@ import cloudinary from "../../Utils/cloudinary.js";
 
 export const addChalet = async (req, res) => {
   try {
-    const { name, location, contact, description, capacity, services, owner } = req.body;
+    const { 
+      name, 
+      location, 
+      contact, 
+      description, 
+      capacity, 
+      services, 
+      owner, 
+      pricing 
+    } = req.body;
 
-    // Check if the owner exists
+    // Validate owner existence
     const ownerData = await ownerModel.findById(owner);
     if (!ownerData) {
       return res.status(404).json({ error: "Owner not found." });
+    }
+
+    // Validate pricing
+    if (!pricing || !pricing.morning || !pricing.evening || !pricing.fullDay) {
+      return res.status(400).json({ 
+        error: "Pricing details (morning, evening, fullDay) are required." 
+      });
     }
 
     // Handle image uploads
@@ -40,6 +56,7 @@ export const addChalet = async (req, res) => {
       capacity,
       services,
       images,
+      pricing, // Add pricing for the chalet
       owner, // Link the chalet to its owner
     });
 
@@ -53,6 +70,7 @@ export const addChalet = async (req, res) => {
     res.status(500).json({ error: "Error adding chalet", details: error.stack });
   }
 };
+
 
 
 
@@ -72,34 +90,33 @@ export const getChaletDetails = async (req, res) => {
 // Reserve a chalet
 export const reserveChalet = async (req, res) => {
   try {
-    const { userId, guestCount, date, period, totalCost } = req.body;
-
-    // Validate required fields
-    if (!userId || !guestCount || !date || !period || !totalCost) {
-      return res.status(400).json({ error: "All reservation fields are required." });
-    }
+    const { userId, guestCount, date, period } = req.body;
 
     // Find the chalet
     const chalet = await chaletModel.findById(req.params.id);
     if (!chalet) {
-      return res.status(404).json({ error: "Chalet not found." });
+      return res.status(404).json({ error: "Chalet not found" });
     }
 
-    // Find the user
-    const user = await userModel.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
+    // Validate period and get pricing
+    const validPeriods = ["morning", "evening", "fullDay"];
+    if (!validPeriods.includes(period)) {
+      return res.status(400).json({ error: "Invalid period selected." });
     }
 
-    // Check for overlapping reservation
+    const totalCost = chalet.pricing[period]; // Get cost dynamically from chalet's pricing
+
+    // Check if the chalet is already reserved for the same date and period
     const existingReservation = await reservationModel.findOne({
       chalet: req.params.id,
-      date: new Date(date),
+      date: new Date(date), // Ensure the date is properly formatted
       period,
     });
 
     if (existingReservation) {
-      return res.status(400).json({ error: "This chalet is already reserved for the selected date and period." });
+      return res.status(400).json({
+        error: "This chalet is already reserved for the selected date and period.",
+      });
     }
 
     // Create a new reservation
@@ -109,10 +126,11 @@ export const reserveChalet = async (req, res) => {
       guestCount,
       date,
       period,
-      totalCost,
+      totalCost, // Use dynamically calculated cost
     });
 
     // Add the reservation ID to the chalet and user
+    const user = await userModel.findById(userId);
     user.reservations.push(reservation._id);
     chalet.reservations.push(reservation._id);
 
@@ -125,6 +143,7 @@ export const reserveChalet = async (req, res) => {
     res.status(500).json({ error: "Error creating reservation", details: error.stack });
   }
 };
+
 
 // List all chalets
 export const listChalets = async (req, res) => {

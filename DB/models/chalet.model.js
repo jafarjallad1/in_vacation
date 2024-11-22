@@ -15,7 +15,6 @@ const chaletSchema = new Schema(
         public_id: { type: String, required: true },
       },
     ],
-   
     capacity: {
       guests: { type: Number, required: true },
       rooms: { type: Number, required: true },
@@ -31,6 +30,11 @@ const chaletSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Owner", // Reference to the Owner model
       required: true,
+    },
+    pricing: {
+      morning: { type: Number, required: true },
+      evening: { type: Number, required: true },
+      fullDay: { type: Number, required: true },
     },
   },
   {
