@@ -6,12 +6,7 @@ import cors from 'cors';
 const initapp = (app,express) => {
     // Middleware for parsing JSON request bodies
     connectDb();
-    app.use(cors({
-        origin: 'https://example.com',
-        methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
-        allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
-        exposedHeaders: ['Authorization'], // Headers exposed to the frontend
-    }));
+    app.use(cors());
     
     app.use(express.json());
     app.use('/auth',authrouter);
