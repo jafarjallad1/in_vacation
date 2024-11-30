@@ -237,9 +237,9 @@ export const getUser = async (req, res) => {
 
     // Fetch the reservations related to the user
     const reservations = await reservationModel
-      .find({ userId }) // Find reservations associated with this user
+      .find({ user: userId }) // Corrected field: Use 'user' instead of 'userId'
       .populate({
-        path: "chaletId", // Assuming reservation schema references `chaletId`
+        path: "chalet", // Assuming reservation schema references `chalet`
         select: "name location pricing", // Include specific chalet fields
       })
       .lean();
@@ -257,4 +257,5 @@ export const getUser = async (req, res) => {
     return res.status(500).json({ message: "Internal server error", error });
   }
 };
+
 
