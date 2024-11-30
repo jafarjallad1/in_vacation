@@ -11,7 +11,7 @@ router.post('/register',fileUpload(fileType.image).single('image'),  validation(
 router.post('/login', validation(loginSchema) , authcontroller.login);
 
 router.get("/users/:userId/reservations", authcontroller.getUserReservations);
-
+router.get("/profile/:userId", authcontroller.getUser);
 router.post("/forgot-password", authcontroller.requestPasswordReset);
 router.post("/reset-password/:token", authcontroller.resetPassword);
 
