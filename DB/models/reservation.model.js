@@ -6,7 +6,7 @@ const reservationSchema = new Schema(
     chalet: { type: mongoose.Schema.Types.ObjectId, ref: "Chalet", required: true },
     guestCount: { type: Number, required: true },
     date: { type: Date, required: true },
-    period: { type: String, enum: ["morning", "evening", "full day"], required: true },
+    period: { type: String, enum: ["morning", "evening", "fullDay"], required: true },
     totalCost: { type: Number, required: true },
     status: {
       type: String,
