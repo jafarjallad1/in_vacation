@@ -228,31 +228,28 @@ export const getUser = async (req, res) => {
   try {
     const { userId } = req.params; // Get userId from request parameters
 
-    // Log the userId for debugging purposes
-    console.log("Fetching user details for ID:", userId);
-
-    // Fetch user details
-    const user = await userModel.findById(userId).lean(); // Use `lean()` for better performance
+    // Fetch the user details
+    const user = await userModel.findById(userId).lean(); // Fetch the user document
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Fetch user's reservations and populate with necessary details
+    // Fetch the reservations related to the user
     const reservations = await reservationModel
-      .find({ userId })
+      .find({ userId }) // Find reservations associated with this user
       .populate({
-        path: "chaletId", // Assuming you store chalet references in the reservation
-        select: "name location pricing", // Only include relevant chalet fields
+        path: "chaletId", // Assuming reservation schema references `chaletId`
+        select: "name location pricing", // Include specific chalet fields
       })
       .lean();
 
-    // Include reservations and all relevant user data in the response
+    // Return the complete user details including populated reservations
     return res.status(200).json({
       message: "User retrieved successfully",
       user: {
-        ...user, // Include all user details
-        reservations, // Attach user's reservations with populated chalet details
+        ...user,
+        reservations, // Attach the user's reservations
       },
     });
   } catch (error) {
@@ -260,3 +257,4 @@ export const getUser = async (req, res) => {
     return res.status(500).json({ message: "Internal server error", error });
   }
 };
+
