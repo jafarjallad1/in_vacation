@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import userModel from "../../../DB/models/user.model.js";
 import chaletModel from "../../../DB/models/chalet.model.js";
+import reservationModel from "../../../DB/models/reservation.model.js";
 import bcrypt from 'bcryptjs';
 import crypto from "crypto";
 import { sendEmail } from "../../Utils/SendEmail.js";
@@ -227,19 +228,21 @@ export const getUser = async (req, res) => {
   try {
     const { userId } = req.params; // Get userId from request parameters
 
-    // Find the user in the database
-    const user = await userModel.findById(userId);
+    // Fetch user details
+    const user = await userModel.findById(userId).lean(); // Use `lean()` for better performance
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Fetch user's reservations (if applicable)
+    const reservations = await reservationModel.find({ userId }).lean();
+
     return res.status(200).json({
       message: "User retrieved successfully",
       user: {
-        username: user.username,
-        email: user.email,
-        phone: user.phone,
+        ...user, // Include all user details
+        reservations, // Attach user's reservations
       },
     });
   } catch (error) {
