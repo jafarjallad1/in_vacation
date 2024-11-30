@@ -226,26 +226,36 @@ export const reserveChalet = async (req, res) => {
 
 export const getUser = async (req, res) => {
   try {
+    // Extract user ID from the request parameters
     const { id } = req.params;
 
-    // Find user and populate reservations with full details
-    const user = await userModel
-      .findById(id)
-      .populate({
-        path: "reservations",
-        populate: {
-          path: "chalet", // Assuming reservations have a `chalet` field
-          select: "name", // Select only the chalet name
-        },
-      });
+    // Log the ID for debugging purposes
+    console.log("Fetching user with ID:", id);
 
+    // Validate that the ID is not empty
+    if (!id) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Find the user by ID and populate related reservations (if any)
+    const user = await UserModel.findById(id).populate("reservations");
+
+    // If the user is not found, return a 404 error
     if (!user) {
+      console.log("User not found for ID:", id);
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ message: "success", user });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error fetching user details", error: err.message });
+    // Return the user details in the response
+    res.status(200).json(user);
+  } catch (error) {
+    // Log the error for debugging
+    console.error("Error fetching user details:", error);
+
+    // Return a 500 Internal Server Error with the error message
+    res.status(500).json({
+      message: "Server error occurred while fetching user details",
+      error: error.message,
+    });
   }
 };
