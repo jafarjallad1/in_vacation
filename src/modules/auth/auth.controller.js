@@ -68,28 +68,31 @@ export const register = async (req, res) => {
 
 
 export const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await userModel.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
+  try {
+      const { email, password } = req.body;
+      const user = await userModel.findOne({ email });
+      if (!user) {
+          return res.status(404).json({ error: "User not found" });
+      }
 
-        const isMatch = await bcrypt.compareSync(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ error: "Incorrect password" });
-        }
+      const isMatch = bcrypt.compareSync(password, user.password);
+      if (!isMatch) {
+          return res.status(400).json({ error: "Incorrect password" });
+      }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      // Include additional fields in the token payload
+      const token = jwt.sign(
+          { userId: user._id, email: user.email, username: user.username },
+          process.env.JWT_SECRET,
+          { expiresIn: '1h' }
+      );
 
-        return res.json({ message: "success", token });
+      return res.json({ message: "success", token });
+  } catch (error) {
+      return res.status(500).json({ error: "catch error", details: error.stack });
+  }
+};
 
-
-    } catch (error) {
-
-        return res.status(500).json({ error: "catch error", error: err.stack });
-    }
-}
 
 export const requestPasswordReset = async (req, res) => {
   try {

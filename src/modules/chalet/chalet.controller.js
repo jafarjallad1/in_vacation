@@ -72,8 +72,6 @@ export const addChalet = async (req, res) => {
 };
 
 
-
-
 // Get details of a specific chalet
 export const getChaletDetails = async (req, res) => {
   try {
