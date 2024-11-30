@@ -226,27 +226,26 @@ export const reserveChalet = async (req, res) => {
 
 export const getUser = async (req, res) => {
   try {
-    const { userId } = req.params; // Get userId from request parameters
+    const { id } = req.params;
 
-    // Fetch user details
-    const user = await userModel.findById(userId).lean(); // Use `lean()` for better performance
+    // Find user and populate reservations with full details
+    const user = await userModel
+      .findById(id)
+      .populate({
+        path: "reservations",
+        populate: {
+          path: "chalet", // Assuming reservations have a `chalet` field
+          select: "name", // Select only the chalet name
+        },
+      });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Fetch user's reservations (if applicable)
-    const reservations = await reservationModel.find({ userId }).lean();
-
-    return res.status(200).json({
-      message: "User retrieved successfully",
-      user: {
-        ...user, // Include all user details
-        reservations, // Attach user's reservations
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching user details:", error);
-    return res.status(500).json({ message: "Internal server error", error });
+    res.json({ message: "success", user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error fetching user details", error: err.message });
   }
 };
