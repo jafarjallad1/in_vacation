@@ -226,36 +226,37 @@ export const reserveChalet = async (req, res) => {
 
 export const getUser = async (req, res) => {
   try {
-    // Extract user ID from the request parameters
-    const { id } = req.params;
+    const { userId } = req.params; // Get userId from request parameters
 
-    // Log the ID for debugging purposes
-    console.log("Fetching user with ID:", id);
+    // Log the userId for debugging purposes
+    console.log("Fetching user details for ID:", userId);
 
-    // Validate that the ID is not empty
-    if (!id) {
-      return res.status(400).json({ message: "User ID is required" });
-    }
+    // Fetch user details
+    const user = await userModel.findById(userId).lean(); // Use `lean()` for better performance
 
-    // Find the user by ID and populate related reservations (if any)
-    const user = await UserModel.findById(id).populate("reservations");
-
-    // If the user is not found, return a 404 error
     if (!user) {
-      console.log("User not found for ID:", id);
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Return the user details in the response
-    res.status(200).json(user);
-  } catch (error) {
-    // Log the error for debugging
-    console.error("Error fetching user details:", error);
+    // Fetch user's reservations and populate with necessary details
+    const reservations = await reservationModel
+      .find({ userId })
+      .populate({
+        path: "chaletId", // Assuming you store chalet references in the reservation
+        select: "name location pricing", // Only include relevant chalet fields
+      })
+      .lean();
 
-    // Return a 500 Internal Server Error with the error message
-    res.status(500).json({
-      message: "Server error occurred while fetching user details",
-      error: error.message,
+    // Include reservations and all relevant user data in the response
+    return res.status(200).json({
+      message: "User retrieved successfully",
+      user: {
+        ...user, // Include all user details
+        reservations, // Attach user's reservations with populated chalet details
+      },
     });
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    return res.status(500).json({ message: "Internal server error", error });
   }
 };
