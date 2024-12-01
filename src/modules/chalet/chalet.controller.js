@@ -161,7 +161,7 @@ export const listChalets = async (req, res) => {
     }
 
     // Check availability based on reservations
-    if (date && period) {
+    if (date) {
       const dateFilter = new Date(date);
 
       filter._id = {
@@ -169,8 +169,8 @@ export const listChalets = async (req, res) => {
           .find({
             date: dateFilter,
             $or: [
-              { period: period },
-              { period: "fullDay" }, // Exclude fullDay reservations for morning/evening search
+              { period: "fullDay" }, // Exclude all full-day reservations
+              ...(period ? [{ period }] : []), // Exclude the specific period if provided
             ],
           })
           .distinct("chalet"),
@@ -191,6 +191,7 @@ export const listChalets = async (req, res) => {
     res.status(500).json({ error: "Error fetching chalets", details: error.stack });
   }
 };
+
 
 
 
