@@ -259,3 +259,64 @@ export const getUser = async (req, res) => {
 };
 
 
+export const editUser = async (req, res) => {
+  try {
+    const { userId } = req.params; // Get userId from request parameters
+    const { username, email, phone, password } = req.body; // Fields to be updated
+
+    // Fetch the user
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // If a file (image) is uploaded, update the profile image
+    if (req.file) {
+      // Delete the old image from Cloudinary
+      if (user.idImage && user.idImage.public_id) {
+        await cloudinary.uploader.destroy(user.idImage.public_id);
+      }
+
+      // Upload the new image to Cloudinary
+      const { secure_url, public_id } = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: "chalet_project/users" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(req.file.buffer);
+      });
+
+      user.idImage = { secure_url, public_id }; // Update image details
+    }
+
+    // Update other user details
+    if (username) user.username = username;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+
+    // If password is updated, hash it before saving
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, parseInt(process.env.SALTROUND));
+      user.password = hashedPassword;
+    }
+
+    // Save the updated user details
+    await user.save();
+
+    // Return updated user data
+    res.status(200).json({
+      message: "User information updated successfully",
+      user: {
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        idImage: user.idImage,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating user information:", error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};

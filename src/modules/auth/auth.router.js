@@ -14,5 +14,6 @@ router.get("/users/:userId/reservations", authcontroller.getUserReservations);
 router.get("/profile/:userId", authcontroller.getUser);
 router.post("/forgot-password", authcontroller.requestPasswordReset);
 router.post("/reset-password/:token", authcontroller.resetPassword);
+router.put('/edit/:userId', upload.single('file'),authcontroller.editUser);
 
 export default router;
