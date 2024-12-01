@@ -14,6 +14,10 @@ router.get("/users/:userId/reservations", authcontroller.getUserReservations);
 router.get("/profile/:userId", authcontroller.getUser);
 router.post("/forgot-password", authcontroller.requestPasswordReset);
 router.post("/reset-password/:token", authcontroller.resetPassword);
-router.put('/edit/:userId', upload.single('file'),authcontroller.editUser);
+router.put(
+    '/edit/:userId',
+    fileUpload(fileType.image).single('image'), // Using the same logic as in the register route
+    authcontroller.editUser
+  );
 
 export default router;
