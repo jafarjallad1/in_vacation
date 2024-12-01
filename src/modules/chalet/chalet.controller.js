@@ -148,23 +148,44 @@ export const listChalets = async (req, res) => {
   try {
     const { name, city, date, period } = req.query;
 
-    // Build a filter object
+    // Build a filter object for the search query
     const filter = {};
 
+    // Case-insensitive chalet name search
     if (name) {
-      filter.name = { $regex: name, $options: "i" }; // Case-insensitive search
+      filter.name = { $regex: name, $options: "i" };
     }
 
+    // City filter
     if (city) {
       filter["location.city"] = city;
     }
 
-    if (date || period) {
-      filter.reservations = {
+    // Exclude chalets reserved for the given date and period
+    if (date && period) {
+      filter["reservations"] = {
         $not: {
           $elemMatch: {
-            ...(date && { date: new Date(date) }),
-            ...(period && { period }),
+            date: new Date(date), // Match reservations for the specified date
+            period: period, // Match reservations for the specified period
+          },
+        },
+      };
+    } else if (date) {
+      // Exclude chalets reserved for the given date (all periods)
+      filter["reservations"] = {
+        $not: {
+          $elemMatch: {
+            date: new Date(date),
+          },
+        },
+      };
+    } else if (period) {
+      // Exclude chalets reserved for the given period (any date)
+      filter["reservations"] = {
+        $not: {
+          $elemMatch: {
+            period: period,
           },
         },
       };
@@ -174,16 +195,18 @@ export const listChalets = async (req, res) => {
     const chalets = await chaletModel
       .find(filter)
       .populate({
-        path: "reservations", // Populate the reservations field
+        path: "reservations", // Populate reservations to help understand reserved slots
         select: "-__v -createdAt -updatedAt", // Exclude unnecessary fields
       });
 
+    // Respond with the filtered list of chalets
     res.status(200).json(chalets);
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching chalets:", error);
     res.status(500).json({ error: "Error fetching chalets", details: error.stack });
   }
 };
+
 
 
 
