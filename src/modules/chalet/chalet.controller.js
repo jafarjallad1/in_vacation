@@ -149,64 +149,49 @@ export const listChalets = async (req, res) => {
   try {
     const { name, city, date, period } = req.query;
 
-    // Build a filter object for the search query
+    // Build a filter object
     const filter = {};
 
-    // Case-insensitive chalet name search
     if (name) {
-      filter.name = { $regex: name, $options: "i" };
+      filter.name = { $regex: name, $options: "i" }; // Case-insensitive search
     }
 
-    // City filter
     if (city) {
       filter["location.city"] = city;
     }
 
-    // Exclude chalets reserved for the given date and period
+    // Check availability based on reservations
     if (date && period) {
-      filter["reservations"] = {
-        $not: {
-          $elemMatch: {
-            date: new Date(date), // Match reservations for the specified date
-            period: period, // Match reservations for the specified period
-          },
-        },
-      };
-    } else if (date) {
-      // Exclude chalets reserved for the given date (all periods)
-      filter["reservations"] = {
-        $not: {
-          $elemMatch: {
-            date: new Date(date),
-          },
-        },
-      };
-    } else if (period) {
-      // Exclude chalets reserved for the given period (any date)
-      filter["reservations"] = {
-        $not: {
-          $elemMatch: {
-            period: period,
-          },
-        },
+      const dateFilter = new Date(date);
+
+      filter._id = {
+        $nin: await reservationModel
+          .find({
+            date: dateFilter,
+            $or: [
+              { period: period },
+              { period: "fullDay" }, // Exclude fullDay reservations for morning/evening search
+            ],
+          })
+          .distinct("chalet"),
       };
     }
 
-    // Fetch chalets and populate reservations
+    // Fetch available chalets
     const chalets = await chaletModel
       .find(filter)
       .populate({
-        path: "reservations", // Populate reservations to help understand reserved slots
-        select: "-__v -createdAt -updatedAt", // Exclude unnecessary fields
+        path: "reservations",
+        select: "-__v -createdAt -updatedAt",
       });
 
-    // Respond with the filtered list of chalets
     res.status(200).json(chalets);
   } catch (error) {
-    console.error("Error fetching chalets:", error);
+    console.error(error);
     res.status(500).json({ error: "Error fetching chalets", details: error.stack });
   }
 };
+
 
 
 
