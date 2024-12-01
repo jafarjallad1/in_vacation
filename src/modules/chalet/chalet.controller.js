@@ -104,16 +104,16 @@ export const reserveChalet = async (req, res) => {
 
     const totalCost = chalet.pricing[period]; // Get cost dynamically from chalet's pricing
 
-    // Check if the chalet is already reserved for the same date and period
-    const existingReservation = await reservationModel.findOne({
+    // Check if the chalet is already reserved for the same date and conflicting periods
+    const conflictingReservations = await reservationModel.find({
       chalet: req.params.id,
-      date: new Date(date), // Ensure the date is properly formatted
-      period,
+      date: new Date(date),
+      period: period === "fullDay" ? { $in: ["morning", "evening", "fullDay"] } : ["fullDay"],
     });
 
-    if (existingReservation) {
+    if (conflictingReservations.length > 0) {
       return res.status(400).json({
-        error: "This chalet is already reserved for the selected date and period.",
+        error: `This chalet is already reserved for the selected date and conflicting periods.`,
       });
     }
 
@@ -141,6 +141,7 @@ export const reserveChalet = async (req, res) => {
     res.status(500).json({ error: "Error creating reservation", details: error.stack });
   }
 };
+
 
 
 // List all chalets
