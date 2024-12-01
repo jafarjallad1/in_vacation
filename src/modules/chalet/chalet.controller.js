@@ -104,11 +104,19 @@ export const reserveChalet = async (req, res) => {
 
     const totalCost = chalet.pricing[period]; // Get cost dynamically from chalet's pricing
 
+    // Determine conflicting periods based on the selected period
+    let conflictingPeriods = [];
+    if (period === "fullDay") {
+      conflictingPeriods = ["morning", "evening", "fullDay"];
+    } else {
+      conflictingPeriods = [period, "fullDay"];
+    }
+
     // Check if the chalet is already reserved for the same date and conflicting periods
     const conflictingReservations = await reservationModel.find({
       chalet: req.params.id,
       date: new Date(date),
-      period: period === "fullDay" ? { $in: ["morning", "evening", "fullDay"] } : ["fullDay"],
+      period: { $in: conflictingPeriods },
     });
 
     if (conflictingReservations.length > 0) {
@@ -141,6 +149,7 @@ export const reserveChalet = async (req, res) => {
     res.status(500).json({ error: "Error creating reservation", details: error.stack });
   }
 };
+
 
 
 
