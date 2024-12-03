@@ -13,7 +13,7 @@ export async function sendEmail(to, subject, html) {
     });
     
     const info = await transporter.sendMail({
-        from: `jafar jallad <${process.env.EMAILSENDER}>`, // sender address
+        from: `IN VACATION <${process.env.EMAILSENDER}>`, // sender address
         to,
         subject,
         html,
