@@ -72,15 +72,22 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Ensure both email and password are provided
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
     // Check if the email exists
     const user = await userModel.findOne({ email });
     if (!user) {
+      console.error("Login error: User not found");
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
     // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password); // Use async version
     if (!isMatch) {
+      console.error("Login error: Password mismatch");
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
@@ -91,13 +98,17 @@ export const login = async (req, res) => {
       { expiresIn: '1h' } // Token expires in 1 hour
     );
 
+    // Log successful login
+    console.log("Login successful for user:", user.email);
+
     // Return token and success message
     return res.json({ message: "Login successful", token });
   } catch (error) {
-    console.error("Error during login:", error);
+    console.error("Error during login:", error.message);
     return res.status(500).json({ error: "Something went wrong", details: error.message });
   }
 };
+
 
 
 export const requestPasswordReset = async (req, res) => {
