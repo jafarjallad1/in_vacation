@@ -4,7 +4,7 @@ const dataMethods = [ 'body', 'params', 'query'];
 
 export const generalFields = {
     email : Joi.string().email().min(6).max(50).required(),
-    password : Joi.string().min(8).required(),
+    password : Joi.string().required(),
 }
 
 const validation = (schema) => {
