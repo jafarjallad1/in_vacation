@@ -72,22 +72,24 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Ensure both email and password are provided
+    // Validate input
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters long" });
     }
 
     // Check if the email exists
     const user = await userModel.findOne({ email });
     if (!user) {
-      console.error("Login error: User not found");
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
     // Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password); // Use async version
+    const isMatch = await bcrypt.compare(password, user.password); // Use async bcrypt.compare
     if (!isMatch) {
-      console.error("Login error: Password mismatch");
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
@@ -95,19 +97,16 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, email: user.email, username: user.username },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' } // Token expires in 1 hour
+      { expiresIn: '1h' }
     );
 
-    // Log successful login
-    console.log("Login successful for user:", user.email);
-
-    // Return token and success message
     return res.json({ message: "Login successful", token });
   } catch (error) {
     console.error("Error during login:", error.message);
     return res.status(500).json({ error: "Something went wrong", details: error.message });
   }
 };
+
 
 
 
