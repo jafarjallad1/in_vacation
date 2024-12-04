@@ -10,6 +10,7 @@ export const generalFields = {
 const validation = (schema) => {
     const validationArray = [];
     return (req, res, next) => {
+        console.log("Incoming Request:", req.body); // Log request body
         dataMethods.forEach((key) => {
             if (schema[key]) {
                 const validationResult = schema[key].validate(req[key], { abortEarly: false });
@@ -19,6 +20,7 @@ const validation = (schema) => {
             }
         });
         if (validationArray.length > 0) {
+            console.error("Validation Errors:", validationArray); // Log validation errors
             return res.status(400).json({
                 error: "Validation failed",
                 details: validationArray.map((error) => ({
@@ -31,6 +33,7 @@ const validation = (schema) => {
         }
     };
 };
+
 
 
 
