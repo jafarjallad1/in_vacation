@@ -70,27 +70,32 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-      const { email, password } = req.body;
-      const user = await userModel.findOne({ email });
-      if (!user) {
-          return res.status(404).json({ error: "User not found" });
-      }
+    const { email, password } = req.body;
 
-      const isMatch = bcrypt.compareSync(password, user.password);
-      if (!isMatch) {
-          return res.status(400).json({ error: "Incorrect password" });
-      }
+    // Check if the email exists
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
 
-      // Include additional fields in the token payload
-      const token = jwt.sign(
-          { userId: user._id, email: user.email, username: user.username },
-          process.env.JWT_SECRET,
-          { expiresIn: '1h' }
-      );
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password); // Use async version
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
 
-      return res.json({ message: "success", token });
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' } // Token expires in 1 hour
+    );
+
+    // Return token and success message
+    return res.json({ message: "Login successful", token });
   } catch (error) {
-      return res.status(500).json({ error: "catch error", details: error.stack });
+    console.error("Error during login:", error);
+    return res.status(500).json({ error: "Something went wrong", details: error.message });
   }
 };
 
