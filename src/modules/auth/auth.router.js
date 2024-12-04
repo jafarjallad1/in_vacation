@@ -8,7 +8,7 @@ const router = Router();
 
 router.post('/register',fileUpload(fileType.image).single('image'),  validation(registerSchema), authcontroller.register);
 
-router.post('/login',  authcontroller.login);
+router.post('/login', validation(loginSchema) , authcontroller.login);
 
 router.get("/users/:userId/reservations", authcontroller.getUserReservations);
 router.get("/profile/:userId", authcontroller.getUser);
