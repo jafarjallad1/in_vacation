@@ -320,3 +320,30 @@ export const editUser = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error });
   }
 };
+
+export const Support = async (req, res) => {
+  const { email, message } = req.body;
+
+  // Validate the inputs
+  if (!email || !message) {
+    return res.status(400).json({ error: "Email and message are required." });
+  }
+
+  try {
+    // HTML content for the email
+    const html = `
+      <h1>Support Request</h1>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Message:</strong></p>
+      <p>${message}</p>
+    `;
+
+    // Send the email
+    await sendEmail("jafarjallad00@gmail.com", "Support Request", html);
+
+    res.status(200).json({ message: "Support message sent successfully!" });
+  } catch (error) {
+    console.error("Error sending support email:", error);
+    res.status(500).json({ error: "Failed to send support message." });
+  }
+};

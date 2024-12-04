@@ -19,5 +19,7 @@ router.put(
     fileUpload(fileType.image).single('image'), // Using the same logic as in the register route
     authcontroller.editUser
   );
+  router.post("/support", authcontroller.Support);
+
 
 export default router;
