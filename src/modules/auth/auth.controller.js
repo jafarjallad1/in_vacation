@@ -70,42 +70,34 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+      const { email, password } = req.body;
 
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
-    }
+      // Validate user existence
+      const user = await userModel.findOne({ email });
+      if (!user) {
+          return res.status(401).json({ error: "Invalid email or password" });
+      }
 
-    if (password.length < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters long" });
-    }
+      // Compare passwords
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+          return res.status(401).json({ error: "Invalid email or password" });
+      }
 
-    // Check if the email exists
-    const user = await userModel.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
+      // Generate JWT
+      const token = jwt.sign(
+          { userId: user._id, email: user.email, username: user.username },
+          process.env.JWT_SECRET,
+          { expiresIn: '1h' }
+      );
 
-    // Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password); // Use async bcrypt.compare
-    if (!isMatch) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id, email: user.email, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    return res.json({ message: "Login successful", token });
+      return res.status(200).json({ message: "Login successful", token });
   } catch (error) {
-    console.error("Error during login:", error.message);
-    return res.status(500).json({ error: "Something went wrong", details: error.message });
+      console.error("Login Error:", error);
+      return res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 
 
