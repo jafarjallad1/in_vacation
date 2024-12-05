@@ -66,23 +66,28 @@ export const loginOwner = async (req, res) => {
         return res.status(400).json({ error: "Invalid owner ID format" });
       }
   
-      // Find the owner and populate chalets
-      const owner = await ownerModel.findById(ownerId).populate("chalets", "name location");
+      // Find chalets owned by the owner and populate reservations
+      const chalets = await chaletModel.find({ owner: ownerId }).populate({
+        path: "reservations",
+        populate: [
+          { path: "user", select: "username email" }, // Populate user details
+          { path: "chalet", select: "name location" }, // Populate chalet details
+        ],
+      });
   
-      if (!owner) {
-        return res.status(404).json({ error: "Owner not found" });
+      if (!chalets || chalets.length === 0) {
+        return res.status(404).json({ error: "No chalets found for this owner" });
       }
   
-      // Fetch reservations for the owner's chalets
-      const reservations = await reservationModel
-        .find({ chalet: { $in: owner.chalets.map(chalet => chalet._id) } }) // Ensure correct IDs
-        .populate("user", "username email")
-        .populate("chalet", "name location")
-        .sort({ date: 1 });
+      // Collect all reservations from the chalets
+      const reservations = chalets.reduce((acc, chalet) => {
+        acc.push(...chalet.reservations);
+        return acc;
+      }, []);
   
       res.status(200).json({
         message: "Reservations fetched successfully",
-        chalets: owner.chalets,
+        chalets,
         reservations,
       });
     } catch (error) {
@@ -90,6 +95,7 @@ export const loginOwner = async (req, res) => {
       res.status(500).json({ error: "Error fetching reservations", details: error.stack });
     }
   };
+  
   
   
   
