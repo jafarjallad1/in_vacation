@@ -75,6 +75,8 @@ export const loginOwner = async (req, res) => {
         ],
       });
   
+      console.log("Fetched Chalets:", chalets); // Debugging log
+  
       if (!chalets || chalets.length === 0) {
         return res.status(404).json({ error: "No chalets found for this owner" });
       }
@@ -84,6 +86,8 @@ export const loginOwner = async (req, res) => {
         acc.push(...chalet.reservations);
         return acc;
       }, []);
+  
+      console.log("Collected Reservations:", reservations); // Debugging log
   
       res.status(200).json({
         message: "Reservations fetched successfully",
@@ -95,6 +99,7 @@ export const loginOwner = async (req, res) => {
       res.status(500).json({ error: "Error fetching reservations", details: error.stack });
     }
   };
+  
   
   
   

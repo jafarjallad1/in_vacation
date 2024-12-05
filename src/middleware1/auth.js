@@ -42,6 +42,8 @@ export const ownerauth = async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
+    console.log("Authenticated Owner:", owner); // Debugging log
+
     req.owner = owner; // Attach owner details to the request
     next();
   } catch (error) {
@@ -49,6 +51,7 @@ export const ownerauth = async (req, res, next) => {
     res.status(401).json({ error: "Unauthorized" });
   }
 };
+
 
 
 
