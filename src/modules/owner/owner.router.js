@@ -14,7 +14,7 @@ const ownerRouter = Router();
 ownerRouter.post("/register", registerOwner);
 
 // Login owner
-ownerRouter.post("/login", ownerauth, loginOwner);
+ownerRouter.post("/login",  loginOwner);
 
 // Get reservations for owner's chalets
 ownerRouter.get("/reservations", ownerauth, getOwnerReservations);
