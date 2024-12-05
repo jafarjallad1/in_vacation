@@ -23,7 +23,7 @@ ownerRouter.get("/:id", getOwnerDetails);
 
 
 // Get reservations for owner's chalets
-ownerRouter.get("/reservations",  getOwnerReservations);
+ownerRouter.get("/reservations", ownerauth, getOwnerReservations);
 
 // Accept or reject a reservation
 ownerRouter.patch("/reservations/:reservationId", ownerauth, updateReservationStatus);

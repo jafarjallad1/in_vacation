@@ -60,10 +60,10 @@ export const loginOwner = async (req, res) => {
   export const getOwnerReservations = async (req, res) => {
     try {
       // Extract owner ID from the authenticated request (JWT)
-      const ownerId = req.owner?.id;
+      const ownerId = req.owner._id;
   
       // Validate the extracted ownerId
-      if (!ownerId.match(/^[0-9a-fA-F]{24}$/)) {
+      if (!ownerId || !ownerId.match(/^[0-9a-fA-F]{24}$/)) {
         return res.status(400).json({ error: "Invalid owner ID format" });
       }
   

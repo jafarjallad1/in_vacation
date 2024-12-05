@@ -23,10 +23,19 @@ export const auth = (req , res , next) =>{
 
 
 
+
+
 export const ownerauth = async (req, res, next) => {
   try {
-    const token = req.header("Authorization").replace("Bearer ", "");
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded.id || !decoded.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(401).json({ error: "Invalid token payload" });
+    }
 
     const owner = await ownerModel.findById(decoded.id);
     if (!owner) {
@@ -36,8 +45,10 @@ export const ownerauth = async (req, res, next) => {
     req.owner = owner; // Attach owner details to the request
     next();
   } catch (error) {
+    console.error("Authorization error:", error.message);
     res.status(401).json({ error: "Unauthorized" });
   }
 };
+
 
 
