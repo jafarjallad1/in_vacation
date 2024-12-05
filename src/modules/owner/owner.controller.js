@@ -59,32 +59,27 @@ export const loginOwner = async (req, res) => {
 
   export const getOwnerReservations = async (req, res) => {
     try {
-      // Extract owner ID from the authenticated request (JWT)
       const ownerId = req.owner._id;
   
-      // Validate the extracted ownerId
+      // Validate ownerId format
       if (!ownerId || !ownerId.match(/^[0-9a-fA-F]{24}$/)) {
         return res.status(400).json({ error: "Invalid owner ID format" });
       }
   
       // Find the owner and populate chalets
-      const owner = await ownerModel.findById(ownerId).populate({
-        path: "chalets",
-        select: "name location",
-      });
+      const owner = await ownerModel.findById(ownerId).populate("chalets", "name location");
   
       if (!owner) {
         return res.status(404).json({ error: "Owner not found" });
       }
   
-      // Get reservations for the owner's chalets
+      // Fetch reservations for the owner's chalets
       const reservations = await reservationModel
-        .find({ chalet: { $in: owner.chalets.map((chalet) => chalet._id) } })
-        .populate("user", "username email") // Populate user details
-        .populate("chalet", "name location") // Populate chalet details
+        .find({ chalet: { $in: owner.chalets } })
+        .populate("user", "username email")
+        .populate("chalet", "name location")
         .sort({ date: 1 });
   
-      // Return success response
       res.status(200).json({
         message: "Reservations fetched successfully",
         chalets: owner.chalets,
@@ -95,6 +90,7 @@ export const loginOwner = async (req, res) => {
       res.status(500).json({ error: "Error fetching reservations", details: error.stack });
     }
   };
+  
   
   
 
