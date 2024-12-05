@@ -75,7 +75,7 @@ export const loginOwner = async (req, res) => {
   
       // Fetch reservations for the owner's chalets
       const reservations = await reservationModel
-        .find({ chalet: { $in: owner.chalets } })
+        .find({ chalet: { $in: owner.chalets.map(chalet => chalet._id) } }) // Ensure correct IDs
         .populate("user", "username email")
         .populate("chalet", "name location")
         .sort({ date: 1 });
@@ -90,6 +90,7 @@ export const loginOwner = async (req, res) => {
       res.status(500).json({ error: "Error fetching reservations", details: error.stack });
     }
   };
+  
   
   
   
