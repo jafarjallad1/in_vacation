@@ -15,7 +15,7 @@ const ownerRouter = Router();
 ownerRouter.post("/register", registerOwner);
 
 // Login owner
-ownerRouter.post("/login",  loginOwner);
+ownerRouter.post("/login",ownerauth , loginOwner);
 
 // Get owner details
 ownerRouter.get("/:id", getOwnerDetails);
