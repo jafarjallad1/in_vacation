@@ -57,24 +57,42 @@ export const loginOwner = async (req, res) => {
   };
 
 
-export const getOwnerReservations = async (req, res) => {
-  try {
-    const ownerId = req.owner.id; // Assuming owner ID is extracted from JWT
-
-    // Find all chalets owned by the owner
-    const chalets = await chaletModel.find({ owner: ownerId }).select("_id name");
-
-    // Get reservations for the owner's chalets
-    const reservations = await reservationModel.find({ chalet: { $in: chalets.map(c => c._id) } })
-      .populate("user", "username email")
-      .populate("chalet", "name")
-      .sort({ date: 1 });
-
-    res.status(200).json({ chalets, reservations });
-  } catch (error) {
-    res.status(500).json({ error: "Error fetching reservations", details: error.stack });
-  }
-};
+  export const getOwnerReservations = async (req, res) => {
+    try {
+      // Extract owner ID from the authenticated request (JWT)
+      const ownerId = req.owner?.id;
+  
+      // Validate the extracted ownerId
+      if (!ownerId || !ownerId.match(/^[0-9a-fA-F]{24}$/)) {
+        return res.status(400).json({ error: "Invalid owner ID format" });
+      }
+  
+      // Find all chalets owned by the owner
+      const chalets = await chaletModel.find({ owner: ownerId }).select("_id name");
+  
+      if (!chalets.length) {
+        return res.status(404).json({ error: "No chalets found for the owner" });
+      }
+  
+      // Fetch reservations for all chalets owned by this owner
+      const reservations = await reservationModel
+        .find({ chalet: { $in: chalets.map((c) => c._id) } })
+        .populate("user", "username email") // Populate user details
+        .populate("chalet", "name location") // Populate chalet details
+        .sort({ date: 1 });
+  
+      // Return success response
+      res.status(200).json({
+        message: "Reservations fetched successfully",
+        chalets,
+        reservations,
+      });
+    } catch (error) {
+      console.error("Error fetching reservations:", error.message);
+      res.status(500).json({ error: "Error fetching reservations", details: error.stack });
+    }
+  };
+  
 
 
 export const updateReservationStatus = async (req, res) => {
