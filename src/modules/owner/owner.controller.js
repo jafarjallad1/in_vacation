@@ -149,3 +149,34 @@ export const editChaletInfo = async (req, res) => {
 };
 
 
+export const getOwnerDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find owner details by ID
+    const owner = await ownerModel.findById(id).select("username email chalets");
+    if (!owner) {
+      return res.status(404).json({ error: "Owner not found" });
+    }
+
+    // Fetch chalet details for the owner's chalets
+    const chalets = await chaletModel.find({ _id: { $in: owner.chalets } }).select("name location pricing");
+
+    // Construct response
+    const response = {
+      username: owner.username,
+      email: owner.email,
+      chalets: chalets.map((chalet) => ({
+        id: chalet._id,
+        name: chalet.name,
+        location: chalet.location,
+        pricing: chalet.pricing,
+      })),
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error fetching owner details", details: error.stack });
+  }
+};
