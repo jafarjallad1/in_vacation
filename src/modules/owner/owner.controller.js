@@ -161,17 +161,40 @@ export const updateReservationStatus = async (req, res) => {
       return res.status(404).json({ error: "Reservation not found" });
     }
 
-    console.log("Old Status:", reservation.status); // Log old status
+    if (status === "rejected") {
+      // Remove reservation from the chalet and user arrays
+      await chaletModel.updateOne(
+        { _id: reservation.chalet },
+        { $pull: { reservations: reservationId } }
+      );
+
+      await userModel.updateOne(
+        { _id: reservation.user },
+        { $pull: { reservations: reservationId } }
+      );
+
+      // Delete the reservation
+      await reservationModel.deleteOne({ _id: reservationId });
+
+      return res
+        .status(200)
+        .json({ message: "Reservation rejected and deleted successfully" });
+    }
+
+    // Update reservation status if not rejected
     reservation.status = status;
     const updatedReservation = await reservation.save();
-    console.log("Updated Reservation:", updatedReservation); // Log updated reservation
 
-    res.status(200).json({ message: `Reservation ${status} successfully`, reservation: updatedReservation });
+    res.status(200).json({
+      message: `Reservation ${status} successfully`,
+      reservation: updatedReservation,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error updating reservation", details: error.stack });
   }
 };
+
 
 
 
