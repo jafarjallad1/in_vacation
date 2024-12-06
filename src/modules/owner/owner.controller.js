@@ -4,6 +4,7 @@ import chaletModel from "../../../DB/models/chalet.model.js";
 import reservationModel from "../../../DB/models/reservation.model.js";
 import ownerModel from "../../../DB/models/owner.model.js";
 import userModel from "../../../DB/models/user.model.js";
+import { sendEmail } from "../../Utils/SendEmail.js";
 
 
 export const registerOwner = async (req, res) => {
@@ -156,49 +157,46 @@ export const loginOwner = async (req, res) => {
 export const updateReservationStatus = async (req, res) => {
   try {
     const { reservationId } = req.params;
-    const { status } = req.body;
+    const { status } = req.body; // "accepted" or "rejected"
 
-    console.log("Received Reservation ID:", reservationId); // Log ID
-    console.log("Received Status:", status); // Log Status
+    const reservation = await reservationModel
+      .findById(reservationId)
+      .populate("user", "username email"); // Populate user details for email
 
-    const reservation = await reservationModel.findById(reservationId);
     if (!reservation) {
-      console.log("Reservation not found in database"); // Log not found
       return res.status(404).json({ error: "Reservation not found" });
     }
 
-    console.log("Reservation Found:", reservation); // Log reservation data
-
     if (status === "rejected") {
-      console.log("Rejecting and deleting reservation...");
-      await chaletModel.updateOne(
-        { _id: reservation.chalet },
-        { $pull: { reservations: reservationId } }
-      );
-
-      await userModel.updateOne(
-        { _id: reservation.user },
-        { $pull: { reservations: reservationId } }
-      );
-
-      await reservationModel.deleteOne({ _id: reservationId });
-
-      console.log("Reservation successfully deleted");
-      return res.status(200).json({
-        message: "Reservation rejected and deleted successfully",
-      });
+      // Remove the reservation if status is "rejected"
+      await reservation.deleteOne();
+    } else {
+      reservation.status = status; // Update status if "accepted"
+      await reservation.save();
     }
 
-    reservation.status = status;
-    const updatedReservation = await reservation.save();
+    // Send email notification to the user
+    const user = reservation.user;
+    if (user && user.email) {
+      const subject = `Reservation ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+      const html = `
+        <h3>Hello ${user.username},</h3>
+        <p>Your reservation for ${reservation.date.toDateString()} during the ${reservation.period} has been <b>${status}</b>.</p>
+        ${status === "accepted" ? `<p>You can proceed to enjoy your booking!</p>` : `<p>We apologize for the inconvenience.</p>`}
+        <br>
+        <p>Thank you,</p>
+        <p>IN VACATION Team</p>
+      `;
 
-    console.log("Updated Reservation:", updatedReservation); // Log updated reservation
+      await sendEmail(user.email, subject, html);
+    }
+
     res.status(200).json({
       message: `Reservation ${status} successfully`,
-      reservation: updatedReservation,
+      reservationId: reservation._id,
     });
   } catch (error) {
-    console.error("Error updating reservation:", error.message); // Log error
+    console.error(error);
     res.status(500).json({ error: "Error updating reservation", details: error.stack });
   }
 };
