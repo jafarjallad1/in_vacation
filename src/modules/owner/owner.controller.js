@@ -123,7 +123,7 @@ export const loginOwner = async (req, res) => {
         match: { owner: ownerId }, // Only include chalets owned by this owner
         select: "name location owner", // Select specific fields to return
       })
-      .populate("user", "username email") // Populate user details
+      .populate("user", "username email idImage") // Populate user details
       .sort({ date: 1 });
 
     // Filter out reservations where the chalet is not matched (not owned by the owner)

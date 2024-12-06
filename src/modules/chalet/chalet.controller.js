@@ -206,7 +206,7 @@ export const listChalets = async (req, res) => {
 
 
 
-// Edit chalet information
+// Edit chalet images
 export const editChalet = async (req, res) => {
   try {
     const chalet = await chaletModel.findById(req.params.id);
