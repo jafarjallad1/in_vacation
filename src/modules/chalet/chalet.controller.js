@@ -90,10 +90,25 @@ export const reserveChalet = async (req, res) => {
   try {
     const { userId, guestCount, date, period } = req.body;
 
+    // Validate the date
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set the time to the start of the day
+    if (selectedDate < today) {
+      return res.status(400).json({ error: "You cannot reserve a chalet for a past date." });
+    }
+
     // Find the chalet
     const chalet = await chaletModel.findById(req.params.id);
     if (!chalet) {
       return res.status(404).json({ error: "Chalet not found" });
+    }
+
+    // Validate guest count
+    if (guestCount > chalet.capacity.guests) {
+      return res.status(400).json({
+        error: `The number of guests exceeds the chalet's capacity of ${chalet.capacity.guests}.`,
+      });
     }
 
     // Validate period and get pricing
@@ -115,7 +130,7 @@ export const reserveChalet = async (req, res) => {
     // Check if the chalet is already reserved for the same date and conflicting periods
     const conflictingReservations = await reservationModel.find({
       chalet: req.params.id,
-      date: new Date(date),
+      date: selectedDate,
       period: { $in: conflictingPeriods },
     });
 
@@ -130,7 +145,7 @@ export const reserveChalet = async (req, res) => {
       user: userId,
       chalet: req.params.id,
       guestCount,
-      date,
+      date: selectedDate,
       period,
       totalCost, // Use dynamically calculated cost
     });
@@ -145,10 +160,11 @@ export const reserveChalet = async (req, res) => {
 
     res.status(201).json({ message: "Reservation created successfully", reservation });
   } catch (error) {
-    console.error(error);
+    console.error("Error creating reservation:", error);
     res.status(500).json({ error: "Error creating reservation", details: error.stack });
   }
 };
+
 
 
 
