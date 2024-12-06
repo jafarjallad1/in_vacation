@@ -99,7 +99,47 @@ export const loginOwner = async (req, res) => {
       res.status(500).json({ error: "Error fetching reservations", details: error.stack });
     }
   };
+
+
+
   
+  export const getOwnerReservationsAlternative = async (req, res) => {
+    try {
+      const ownerId = req.owner._id;
+  
+      // Validate ownerId format
+      if (!ownerId || !ownerId.match(/^[0-9a-fA-F]{24}$/)) {
+        return res.status(400).json({ error: "Invalid owner ID format" });
+      }
+  
+      // Find reservations directly linked to chalets owned by this owner
+      const reservations = await reservationModel
+        .find()
+        .populate({
+          path: "chalet",
+          match: { owner: ownerId }, // Only include chalets owned by this owner
+          select: "name location owner", // Select specific fields to return
+        })
+        .populate("user", "username email") // Populate user details
+        .sort({ date: 1 });
+  
+      // Filter out reservations where the chalet is not matched (not owned by the owner)
+      const filteredReservations = reservations.filter((reservation) => reservation.chalet);
+  
+      if (filteredReservations.length === 0) {
+        return res.status(404).json({ error: "No reservations found for this owner" });
+      }
+  
+      res.status(200).json({
+        message: "Reservations fetched successfully",
+        reservations: filteredReservations,
+      });
+    } catch (error) {
+      console.error("Error fetching reservations:", error.message);
+      res.status(500).json({ error: "Error fetching reservations", details: error.stack });
+    }
+  };
+    
   
   
   

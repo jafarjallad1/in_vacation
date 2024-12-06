@@ -6,6 +6,7 @@ import {
   updateReservationStatus,
   editChaletInfo,
   getOwnerDetails,
+  getOwnerReservationsAlternative,
 } from "./owner.controller.js";
 import { ownerauth } from "../../middleware1/auth.js"; // Middleware to verify owner's token
 
@@ -24,6 +25,9 @@ ownerRouter.get("/:id", getOwnerDetails);
 
 // Get reservations for owner's chalets
 ownerRouter.get("/reservations", ownerauth, getOwnerReservations);
+
+// Alternative way to fetch owner reservations
+ownerRouter.get("/reservations/alternative", ownerauth, getOwnerReservationsAlternative);
 
 // Accept or reject a reservation
 ownerRouter.patch("/reservations/:reservationId", ownerauth, updateReservationStatus);
