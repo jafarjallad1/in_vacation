@@ -156,16 +156,16 @@ export const updateReservationStatus = async (req, res) => {
     const { reservationId } = req.params;
     const { status } = req.body;
 
-    console.log("Received Reservation ID:", reservationId); // Log Reservation ID
-    console.log("Status to Update:", status); // Log Status to Update
+    console.log("Received Reservation ID:", reservationId); // Log ID
+    console.log("Received Status:", status); // Log Status
 
     const reservation = await reservationModel.findById(reservationId);
     if (!reservation) {
-      console.log("Reservation not found in database"); // Log if not found
+      console.log("Reservation not found in database"); // Log not found
       return res.status(404).json({ error: "Reservation not found" });
     }
 
-    console.log("Reservation Found:", reservation); // Log Reservation Data
+    console.log("Reservation Found:", reservation); // Log reservation data
 
     if (status === "rejected") {
       console.log("Rejecting and deleting reservation...");
@@ -190,17 +190,17 @@ export const updateReservationStatus = async (req, res) => {
     reservation.status = status;
     const updatedReservation = await reservation.save();
 
-    console.log("Updated Reservation:", updatedReservation); // Log Updated Reservation
-
+    console.log("Updated Reservation:", updatedReservation); // Log updated reservation
     res.status(200).json({
       message: `Reservation ${status} successfully`,
       reservation: updatedReservation,
     });
   } catch (error) {
-    console.error("Error updating reservation:", error.message); // Log Error
+    console.error("Error updating reservation:", error.message); // Log error
     res.status(500).json({ error: "Error updating reservation", details: error.stack });
   }
 };
+
 
 
 
