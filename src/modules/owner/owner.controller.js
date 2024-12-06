@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import chaletModel from "../../../DB/models/chalet.model.js";
 import reservationModel from "../../../DB/models/reservation.model.js";
 import ownerModel from "../../../DB/models/owner.model.js";
+import userModel from "../../DB/models/user.model.js";
+
 
 export const registerOwner = async (req, res) => {
   try {
