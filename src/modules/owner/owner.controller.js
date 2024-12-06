@@ -154,15 +154,21 @@ export const loginOwner = async (req, res) => {
 export const updateReservationStatus = async (req, res) => {
   try {
     const { reservationId } = req.params;
-    const { status } = req.body; // "accepted" or "rejected"
+    const { status } = req.body;
+
+    console.log("Received Reservation ID:", reservationId); // Log Reservation ID
+    console.log("Status to Update:", status); // Log Status to Update
 
     const reservation = await reservationModel.findById(reservationId);
     if (!reservation) {
+      console.log("Reservation not found in database"); // Log if not found
       return res.status(404).json({ error: "Reservation not found" });
     }
 
+    console.log("Reservation Found:", reservation); // Log Reservation Data
+
     if (status === "rejected") {
-      // Remove reservation from the chalet and user arrays
+      console.log("Rejecting and deleting reservation...");
       await chaletModel.updateOne(
         { _id: reservation.chalet },
         { $pull: { reservations: reservationId } }
@@ -173,27 +179,29 @@ export const updateReservationStatus = async (req, res) => {
         { $pull: { reservations: reservationId } }
       );
 
-      // Delete the reservation
       await reservationModel.deleteOne({ _id: reservationId });
 
-      return res
-        .status(200)
-        .json({ message: "Reservation rejected and deleted successfully" });
+      console.log("Reservation successfully deleted");
+      return res.status(200).json({
+        message: "Reservation rejected and deleted successfully",
+      });
     }
 
-    // Update reservation status if not rejected
     reservation.status = status;
     const updatedReservation = await reservation.save();
+
+    console.log("Updated Reservation:", updatedReservation); // Log Updated Reservation
 
     res.status(200).json({
       message: `Reservation ${status} successfully`,
       reservation: updatedReservation,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error updating reservation:", error.message); // Log Error
     res.status(500).json({ error: "Error updating reservation", details: error.stack });
   }
 };
+
 
 
 
