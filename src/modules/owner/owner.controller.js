@@ -293,32 +293,20 @@ export const editChaletInfoAndImages = async (req, res) => {
         .json({ error: "Chalet not found or you do not own this chalet" });
     }
 
-    // Update text-based fields dynamically
+    // Update fields dynamically
     if (req.body) {
-      for (const key in req.body) {
-        if (key.startsWith("pricing.")) {
-          // Handle nested pricing updates dynamically
-          const [, pricingKey] = key.split(".");
-          if (pricingKey in chalet.pricing) {
-            chalet.pricing[pricingKey] = req.body[key];
-          }
-        } else if (key.startsWith("capacity.")) {
-          // Handle nested capacity updates dynamically
-          const [, capacityKey] = key.split(".");
-          if (capacityKey in chalet.capacity) {
-            chalet.capacity[capacityKey] = req.body[key];
-          }
-        } else if (key.includes(".")) {
-          // Handle other nested objects like location.city, contact.phone
-          const [parentKey, childKey] = key.split(".");
-          if (chalet[parentKey] && childKey in chalet[parentKey]) {
-            chalet[parentKey][childKey] = req.body[key];
-          }
-        } else if (chalet[key] !== undefined) {
-          // Update top-level fields dynamically
-          chalet[key] = req.body[key];
+      Object.keys(req.body).forEach((key) => {
+        const keys = key.split(".");
+        let current = chalet;
+
+        // Traverse the object structure to set the value
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (!current[keys[i]]) current[keys[i]] = {}; // Initialize if not exists
+          current = current[keys[i]];
         }
-      }
+
+        current[keys[keys.length - 1]] = req.body[key];
+      });
     }
 
     // Handle image updates (Delete old images and upload new ones)
@@ -364,4 +352,6 @@ export const editChaletInfoAndImages = async (req, res) => {
       .json({ error: "Error updating chalet", details: error.message });
   }
 };
+
+
 
