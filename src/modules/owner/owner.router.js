@@ -1,4 +1,5 @@
 import { Router } from "express";
+import multer from "multer";
 import {
   registerOwner,
   loginOwner,
@@ -12,6 +13,7 @@ import {
 import { ownerauth } from "../../middleware1/auth.js"; // Middleware to verify owner's token
 
 const ownerRouter = Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Register a new owner
 ownerRouter.post("/register", registerOwner);
