@@ -293,20 +293,15 @@ export const editChaletInfoAndImages = async (req, res) => {
         .json({ error: "Chalet not found or you do not own this chalet" });
     }
 
-    // Update fields dynamically
-    if (req.body) {
-      Object.keys(req.body).forEach((key) => {
-        const keys = key.split(".");
-        let current = chalet;
-
-        // Traverse the object structure to set the value
-        for (let i = 0; i < keys.length - 1; i++) {
-          if (!current[keys[i]]) current[keys[i]] = {}; // Initialize if not exists
-          current = current[keys[i]];
-        }
-
-        current[keys[keys.length - 1]] = req.body[key];
-      });
+    // Prepare update object
+    const updateData = {};
+    for (const key in req.body) {
+      const keys = key.split(".");
+      if (keys.length === 1) {
+        updateData[key] = req.body[key]; // Top-level fields
+      } else {
+        updateData[keys.join(".")] = req.body[key]; // Nested fields (e.g., pricing.morning)
+      }
     }
 
     // Handle image updates (Delete old images and upload new ones)
@@ -334,24 +329,27 @@ export const editChaletInfoAndImages = async (req, res) => {
         )
       );
 
-      // Step 3: Assign new images to chalet
-      chalet.images = uploadedImages;
+      // Step 3: Add new images to updateData
+      updateData["images"] = uploadedImages;
     }
 
-    // Save updated chalet
-    await chalet.save();
+    // Perform the update using $set to handle nested fields
+    const updatedChalet = await chaletModel.findByIdAndUpdate(
+      chaletId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
 
     res.status(200).json({
       message: "Chalet updated successfully",
-      chalet,
+      chalet: updatedChalet,
     });
   } catch (error) {
     console.error("Error updating chalet:", error);
-    res
-      .status(500)
-      .json({ error: "Error updating chalet", details: error.message });
+    res.status(500).json({ error: "Error updating chalet", details: error.message });
   }
 };
+
 
 
 
