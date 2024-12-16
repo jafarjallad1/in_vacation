@@ -296,16 +296,27 @@ export const editChaletInfoAndImages = async (req, res) => {
     // Update text-based fields dynamically
     if (req.body) {
       for (const key in req.body) {
-        if (key.includes("pricing")) {
-          // Update pricing fields
-          const pricingKey = key.split(".")[1];
-          chalet.pricing[pricingKey] = req.body[key];
-        } else if (key.includes("capacity")) {
-          // Update capacity fields
-          const capacityKey = key.split(".")[1];
-          chalet.capacity[capacityKey] = req.body[key];
+        if (key.startsWith("pricing.")) {
+          // Handle nested pricing updates dynamically
+          const [, pricingKey] = key.split(".");
+          if (pricingKey in chalet.pricing) {
+            chalet.pricing[pricingKey] = req.body[key];
+          }
+        } else if (key.startsWith("capacity.")) {
+          // Handle nested capacity updates dynamically
+          const [, capacityKey] = key.split(".");
+          if (capacityKey in chalet.capacity) {
+            chalet.capacity[capacityKey] = req.body[key];
+          }
+        } else if (key.includes(".")) {
+          // Handle other nested objects like location.city, contact.phone
+          const [parentKey, childKey] = key.split(".");
+          if (chalet[parentKey] && childKey in chalet[parentKey]) {
+            chalet[parentKey][childKey] = req.body[key];
+          }
         } else if (chalet[key] !== undefined) {
-          chalet[key] = req.body[key]; // Update other fields
+          // Update top-level fields dynamically
+          chalet[key] = req.body[key];
         }
       }
     }
@@ -342,7 +353,10 @@ export const editChaletInfoAndImages = async (req, res) => {
     // Save updated chalet
     await chalet.save();
 
-    res.status(200).json({ message: "Chalet updated successfully", chalet });
+    res.status(200).json({
+      message: "Chalet updated successfully",
+      chalet,
+    });
   } catch (error) {
     console.error("Error updating chalet:", error);
     res
@@ -350,3 +364,4 @@ export const editChaletInfoAndImages = async (req, res) => {
       .json({ error: "Error updating chalet", details: error.message });
   }
 };
+
