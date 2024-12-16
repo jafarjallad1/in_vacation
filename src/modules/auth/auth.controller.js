@@ -99,9 +99,6 @@ export const login = async (req, res) => {
 };
 
 
-
-
-
 export const requestPasswordReset = async (req, res) => {
   try {
     const { email } = req.body;

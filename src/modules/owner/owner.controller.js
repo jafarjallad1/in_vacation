@@ -5,6 +5,8 @@ import reservationModel from "../../../DB/models/reservation.model.js";
 import ownerModel from "../../../DB/models/owner.model.js";
 import userModel from "../../../DB/models/user.model.js";
 import { sendEmail } from "../../Utils/SendEmail.js";
+import cloudinary from "../../Utils/cloudinary.js";
+
 
 
 export const registerOwner = async (req, res) => {
@@ -147,12 +149,6 @@ export const loginOwner = async (req, res) => {
 };
 
     
-  
-  
-  
-  
-  
-
 
 export const updateReservationStatus = async (req, res) => {
   try {
@@ -200,10 +196,6 @@ export const updateReservationStatus = async (req, res) => {
     res.status(500).json({ error: "Error updating reservation", details: error.stack });
   }
 };
-
-
-
-
 
 
 export const editChaletInfo = async (req, res) => {
@@ -283,5 +275,78 @@ export const getOwnerDetails = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error fetching owner details", details: error.stack });
+  }
+};
+
+
+
+export const editChaletInfoAndImages = async (req, res) => {
+  try {
+    const { chaletId } = req.params; // Extract chaletId from URL
+    const ownerId = req.owner.id; // Extract owner ID from JWT
+
+    // Find the chalet and verify ownership
+    const chalet = await chaletModel.findOne({ _id: chaletId, owner: ownerId });
+    if (!chalet) {
+      return res
+        .status(404)
+        .json({ error: "Chalet not found or you do not own this chalet" });
+    }
+
+    // Update text-based fields dynamically
+    if (req.body) {
+      for (const key in req.body) {
+        if (key.includes("pricing")) {
+          // Update pricing fields
+          const pricingKey = key.split(".")[1];
+          chalet.pricing[pricingKey] = req.body[key];
+        } else if (key.includes("capacity")) {
+          // Update capacity fields
+          const capacityKey = key.split(".")[1];
+          chalet.capacity[capacityKey] = req.body[key];
+        } else if (chalet[key] !== undefined) {
+          chalet[key] = req.body[key]; // Update other fields
+        }
+      }
+    }
+
+    // Handle image updates (Delete old images and upload new ones)
+    if (req.files && req.files.length > 0) {
+      // Step 1: Delete old images from Cloudinary
+      if (chalet.images && chalet.images.length > 0) {
+        const deletePromises = chalet.images.map((img) =>
+          cloudinary.uploader.destroy(img.public_id)
+        );
+        await Promise.all(deletePromises);
+      }
+
+      // Step 2: Upload new images to Cloudinary
+      const uploadedImages = await Promise.all(
+        req.files.map((file) =>
+          new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+              { folder: "chalet_project/chalets" },
+              (error, result) => {
+                if (result) resolve({ secure_url: result.secure_url, public_id: result.public_id });
+                else reject(error);
+              }
+            ).end(file.buffer);
+          })
+        )
+      );
+
+      // Step 3: Assign new images to chalet
+      chalet.images = uploadedImages;
+    }
+
+    // Save updated chalet
+    await chalet.save();
+
+    res.status(200).json({ message: "Chalet updated successfully", chalet });
+  } catch (error) {
+    console.error("Error updating chalet:", error);
+    res
+      .status(500)
+      .json({ error: "Error updating chalet", details: error.message });
   }
 };

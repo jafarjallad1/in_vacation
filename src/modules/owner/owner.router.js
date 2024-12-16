@@ -7,6 +7,7 @@ import {
   editChaletInfo,
   getOwnerDetails,
   getOwnerReservationsAlternative,
+  editChaletInfoAndImages,
 } from "./owner.controller.js";
 import { ownerauth } from "../../middleware1/auth.js"; // Middleware to verify owner's token
 
@@ -34,5 +35,12 @@ ownerRouter.patch("/reservations/:reservationId", ownerauth, updateReservationSt
 
 // Edit chalet information
 ownerRouter.patch("/chalets/:chaletId", ownerauth, editChaletInfo);
+
+ownerRouter.patch(
+  "/chalet/:chaletId",
+  ownerauth,
+  upload.array("images", 5), // Allows uploading up to 5 new images
+  editChaletInfoAndImages
+);
 
 export default ownerRouter;
