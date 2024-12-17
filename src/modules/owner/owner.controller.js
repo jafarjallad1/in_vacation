@@ -285,8 +285,16 @@ export const editChaletInfoAndImages = async (req, res) => {
     const { chaletId } = req.params; // Extract chaletId from URL
     const ownerId = req.owner.id; // Extract owner ID from JWT
 
+    // Use _id from body or params for clarity
+    const id = req.body.id || chaletId;
+
+    // Validate chaletId or id
+    if (!id) {
+      return res.status(400).json({ error: "Chalet ID is required." });
+    }
+
     // Find the chalet and verify ownership
-    const chalet = await chaletModel.findOne({ _id: chaletId, owner: ownerId });
+    const chalet = await chaletModel.findOne({ _id: id, owner: ownerId });
     if (!chalet) {
       return res
         .status(404)
@@ -296,17 +304,19 @@ export const editChaletInfoAndImages = async (req, res) => {
     // Prepare update object
     const updateData = {};
     for (const key in req.body) {
-      const keys = key.split(".");
-      if (keys.length === 1) {
-        updateData[key] = req.body[key]; // Top-level fields
-      } else {
-        updateData[keys.join(".")] = req.body[key]; // Nested fields (e.g., pricing.morning)
+      if (key !== "id" && key !== "images") {
+        const keys = key.split(".");
+        if (keys.length === 1) {
+          updateData[key] = req.body[key]; // Top-level fields
+        } else {
+          updateData[keys.join(".")] = req.body[key]; // Nested fields
+        }
       }
     }
 
     // Handle image updates (Delete old images and upload new ones)
     if (req.files && req.files.length > 0) {
-      // Step 1: Delete old images from Cloudinary
+      // Delete old images
       if (chalet.images && chalet.images.length > 0) {
         const deletePromises = chalet.images.map((img) =>
           cloudinary.uploader.destroy(img.public_id)
@@ -314,7 +324,7 @@ export const editChaletInfoAndImages = async (req, res) => {
         await Promise.all(deletePromises);
       }
 
-      // Step 2: Upload new images to Cloudinary
+      // Upload new images
       const uploadedImages = await Promise.all(
         req.files.map((file) =>
           new Promise((resolve, reject) => {
@@ -329,13 +339,12 @@ export const editChaletInfoAndImages = async (req, res) => {
         )
       );
 
-      // Step 3: Add new images to updateData
-      updateData["images"] = uploadedImages;
+      updateData.images = uploadedImages; // Add new images to updateData
     }
 
-    // Perform the update using $set to handle nested fields
+    // Update the chalet using $set
     const updatedChalet = await chaletModel.findByIdAndUpdate(
-      chaletId,
+      id,
       { $set: updateData },
       { new: true, runValidators: true }
     );
@@ -349,6 +358,7 @@ export const editChaletInfoAndImages = async (req, res) => {
     res.status(500).json({ error: "Error updating chalet", details: error.message });
   }
 };
+
 
 
 
