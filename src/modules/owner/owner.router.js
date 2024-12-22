@@ -9,6 +9,7 @@ import {
   getOwnerDetails,
   getOwnerReservationsAlternative,
   editChaletInfoAndImages,
+  deleteChalet,
 } from "./owner.controller.js";
 import { ownerauth } from "../../middleware1/auth.js"; // Middleware to verify owner's token
 
@@ -44,5 +45,9 @@ ownerRouter.patch(
   upload.array("images", 5), // Allows uploading up to 5 new images
   editChaletInfoAndImages
 );
+
+// Delete  chalet
+
+ownerRouter.delete("/chalet/:chaletId", ownerauth, deleteChalet);
 
 export default ownerRouter;

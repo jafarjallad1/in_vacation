@@ -360,6 +360,36 @@ export const editChaletInfoAndImages = async (req, res) => {
 };
 
 
+export const deleteChalet = async (req, res) => {
+  try {
+    const { chaletId } = req.params; // Extract chaletId from URL
+    const ownerId = req.owner.id;    // Extract owner ID from JWT (authentication)
+
+    // Find the chalet and verify ownership
+    const chalet = await chaletModel.findOne({ _id: chaletId, owner: ownerId });
+    if (!chalet) {
+      return res.status(404).json({ error: "Chalet not found or unauthorized to delete" });
+    }
+
+    // Delete chalet images from Cloudinary if they exist
+    if (chalet.images && chalet.images.length > 0) {
+      const deletePromises = chalet.images.map((img) =>
+        cloudinary.uploader.destroy(img.public_id)
+      );
+      await Promise.all(deletePromises);
+    }
+
+    // Delete the chalet from the database
+    await chaletModel.deleteOne({ _id: chaletId });
+
+    res.status(200).json({ message: "Chalet deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting chalet:", error);
+    res.status(500).json({ error: "Failed to delete chalet", details: error.message });
+  }
+};
+
+
 
 
 
