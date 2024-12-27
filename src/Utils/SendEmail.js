@@ -4,8 +4,8 @@ export async function sendEmail(to, subject, html) {
     const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-            user: process.env.EMAILSENDER,
-            pass: process.env.PASSWORDSENDER,
+            user: "testinvacation@gmail.com",
+            pass: "invacation11223344",
         },
         tls: {
             rejectUnauthorized: false,
