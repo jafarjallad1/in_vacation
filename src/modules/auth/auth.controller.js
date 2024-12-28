@@ -343,7 +343,7 @@ export const Support = async (req, res) => {
     `;
 
     // Send the email
-    await sendEmail("tsetinvacation@gmail.com", "Support Request", html);
+    await sendEmail("testinvacation@gmail.com", "Support Request", html);
 
     res.status(200).json({ message: "Support message sent successfully!" });
   } catch (error) {
